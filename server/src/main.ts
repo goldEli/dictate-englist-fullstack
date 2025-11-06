@@ -10,7 +10,11 @@ async function bootstrap() {
   app.useGlobalInterceptors(new HttpLoggingInterceptor(app.get(AppLogger)));
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3008',
+    origin: [
+      'http://localhost:3008',
+      'http://192.168.31.44:3008',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -25,6 +29,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, process.env.HOST || '0.0.0.0');
 }
 bootstrap();

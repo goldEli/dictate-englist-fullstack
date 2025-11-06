@@ -2,23 +2,18 @@
 
 import Link from "next/link";
 import {
-  ChangeEvent,
   useCallback,
   useEffect,
-  useRef,
   useState,
 } from "react";
 
 import {
-  EXPORT_FILENAME,
-  INDEX_STORAGE_KEY,
   Sentence,
   makeId,
-  sanitizeSentencesPayload,
 } from "@/app/lib/sentence-utils";
 import { sentencesService } from "@/lib/sentences-service";
 
-type ImportStatus =
+type OperationStatus =
   | { type: "success"; message: string }
   | { type: "error"; message: string };
 
@@ -27,8 +22,7 @@ export default function SentenceBankPage() {
   const [draft, setDraft] = useState("");
   const [isReady, setIsReady] = useState(false);
   const [speechAvailable, setSpeechAvailable] = useState(false);
-  const [importStatus, setImportStatus] = useState<ImportStatus | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [operationStatus, setOperationStatus] = useState<OperationStatus | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -59,18 +53,18 @@ export default function SentenceBankPage() {
   }, []);
 
   useEffect(() => {
-    if (!importStatus || typeof window === "undefined") {
+    if (!operationStatus || typeof window === "undefined") {
       return;
     }
 
     const timer = window.setTimeout(() => {
-      setImportStatus(null);
+      setOperationStatus(null);
     }, 5000);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [importStatus]);
+  }, [operationStatus]);
 
   const speak = useCallback(
     (text: string) => {
@@ -90,102 +84,69 @@ export default function SentenceBankPage() {
     [speechAvailable],
   );
 
-  const handleAddSentence = () => {
+  const handleAddSentence = async () => {
     const cleaned = draft.trim();
     if (!cleaned) {
       return;
     }
 
-    setSentences((previous) => [
-      ...previous,
-      { id: makeId(), text: cleaned },
-    ]);
-    setDraft("");
-  };
-
-  const handleUpdateSentence = (id: string, text: string) => {
-    setSentences((previous) =>
-      previous.map((sentence) =>
-        sentence.id === id ? { ...sentence, text } : sentence,
-      ),
-    );
-  };
-
-  const handleDeleteSentence = (id: string) => {
-    setSentences((previous) => previous.filter((sentence) => sentence.id !== id));
-  };
-
-  const handleExport = useCallback(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    const newSentence = { id: makeId(), text: cleaned };
 
     try {
-      const payload = sentences.map((sentence) => ({
-        id: sentence.id,
-        text: sentence.text,
-      }));
-
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: "application/json",
+      await sentencesService.addSentence(newSentence);
+      setSentences((previous) => [...previous, newSentence]);
+      setDraft("");
+      setOperationStatus({
+        type: "success",
+        message: "Sentence added successfully.",
       });
-      const url = window.URL.createObjectURL(blob);
-      const tempLink = document.createElement("a");
-      tempLink.href = url;
-      tempLink.download = EXPORT_FILENAME;
-      document.body.appendChild(tempLink);
-      tempLink.click();
-      tempLink.remove();
-      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Unable to export sentences", error);
+      console.error("Unable to add sentence", error);
+      setOperationStatus({
+        type: "error",
+        message: "Failed to add sentence. Please try again.",
+      });
     }
-  }, [sentences]);
+  };
 
-  const handleImportFile = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (event.target.value) {
-        event.target.value = "";
-      }
+  const handleUpdateSentence = async (id: string, text: string) => {
+    try {
+      await sentencesService.updateSentence(id, text);
+      setSentences((previous) =>
+        previous.map((sentence) =>
+          sentence.id === id ? { ...sentence, text } : sentence,
+        ),
+      );
+      setOperationStatus({
+        type: "success",
+        message: "Sentence updated successfully.",
+      });
+    } catch (error) {
+      console.error("Unable to update sentence", error);
+      setOperationStatus({
+        type: "error",
+        message: "Failed to update sentence. Please try again.",
+      });
+    }
+  };
 
-      if (!file) {
-        return;
-      }
+  const handleDeleteSentence = async (id: string) => {
+    try {
+      await sentencesService.deleteSentence(id);
+      setSentences((previous) => previous.filter((sentence) => sentence.id !== id));
+      setOperationStatus({
+        type: "success",
+        message: "Sentence deleted successfully.",
+      });
+    } catch (error) {
+      console.error("Unable to delete sentence", error);
+      setOperationStatus({
+        type: "error",
+        message: "Failed to delete sentence. Please try again.",
+      });
+    }
+  };
 
-      setImportStatus(null);
-
-      try {
-        const text = await file.text();
-        const raw = JSON.parse(text);
-        const parsed = sanitizeSentencesPayload(raw);
-
-        if (!parsed) {
-          throw new Error("Invalid payload");
-        }
-
-        if (Array.isArray(raw) && raw.length > 0 && parsed.length === 0) {
-          throw new Error("No valid sentences");
-        }
-
-        setSentences(parsed);
-        window.localStorage.setItem(INDEX_STORAGE_KEY, "0");
-        setImportStatus({
-          type: "success",
-          message: `Imported ${parsed.length} sentence${parsed.length === 1 ? "" : "s"
-            } successfully.`,
-        });
-      } catch (error) {
-        console.error("Unable to import sentences", error);
-        setImportStatus({
-          type: "error",
-          message:
-            "Import failed. Please choose a JSON file exported from this app.",
-        });
-      }
-    },
-    [],
-  );
 
   return (
     <div className="min-h-screen bg-slate-950 py-12 text-slate-100">
@@ -199,8 +160,7 @@ export default function SentenceBankPage() {
               Manage Your Practice Lists
             </h1>
             <p className="mt-2 text-sm text-slate-400">
-              Add, edit, import, or export the sentences you use on the practice
-              screen.
+              Add, edit, or delete the sentences you use on the practice screen.
             </p>
           </div>
           <Link
@@ -211,53 +171,17 @@ export default function SentenceBankPage() {
           </Link>
         </header>
 
-        {importStatus && (
+        {operationStatus && (
           <div
             className={`rounded-2xl border px-5 py-3 text-sm ${
-              importStatus.type === "success"
+              operationStatus.type === "success"
                 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
                 : "border-rose-500/40 bg-rose-500/10 text-rose-200"
             }`}
           >
-            {importStatus.message}
+            {operationStatus.message}
           </div>
         )}
-
-        <section className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
-                Backup &amp; Share
-              </h2>
-              <p className="mt-1 text-sm text-slate-300">
-                Export a JSON snapshot or import a list you previously saved.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={handleExport}
-                className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-emerald-400"
-              >
-                Export
-              </button>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="rounded-full border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500"
-              >
-                Import
-              </button>
-            </div>
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/json"
-            className="hidden"
-            onChange={handleImportFile}
-          />
-        </section>
 
         <section className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
           <h2 className="text-lg font-semibold text-slate-100">
@@ -294,8 +218,7 @@ export default function SentenceBankPage() {
           </div>
           {sentences.length === 0 ? (
             <p className="mt-4 text-sm text-slate-400">
-              Nothing here yet. Add a sentence above or import one of your saved
-              lists.
+              Nothing here yet. Add a sentence above to get started.
             </p>
           ) : (
             <div className="mt-4 space-y-4">
@@ -327,7 +250,7 @@ export default function SentenceBankPage() {
                   </div>
                   <textarea
                     value={sentence.text}
-                    onChange={(event) =>
+                    onBlur={(event) =>
                       handleUpdateSentence(sentence.id, event.target.value)
                     }
                     className="h-24 w-full resize-none rounded-xl border border-slate-800 bg-slate-950 p-3 text-sm text-slate-100 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-700"

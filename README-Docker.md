@@ -2,6 +2,10 @@
 
 This guide explains how to deploy the Dictate English Fullstack application using Docker and Docker Compose on macOS.
 
+```
+./deploy.sh --mysql-password mypassword123 --port 8080 --mysql-data ./mysql-data
+```
+
 ## Prerequisites
 
 Before you begin, ensure you have the following installed on your Mac:

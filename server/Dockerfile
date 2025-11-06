@@ -22,8 +22,8 @@ RUN pnpm build
 # Production stage
 FROM node:20-alpine AS runner
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install pnpm and curl for healthcheck
+RUN npm install -g pnpm && apk add --no-cache curl
 
 # Create app directory
 WORKDIR /usr/src/app

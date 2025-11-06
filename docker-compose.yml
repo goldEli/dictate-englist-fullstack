@@ -69,8 +69,8 @@ services:
       retries: 10
     networks:
       - app-network
-    expose:
-      - 3000
+    ports:
+      - "8081:3000"
 
   frontend:
     build:

@@ -12,15 +12,13 @@ import {
 
 import { ConfettiBurst } from "@/app/components/confetti";
 import { useAudioCues } from "@/app/hooks/use-audio-cues";
+import { sentencesService, Sentence } from "@/lib/sentences-service";
 import {
   DEFAULT_PREFERENCES,
-  DEFAULT_SENTENCES,
   EXPORT_FILENAME,
   INDEX_STORAGE_KEY,
   PREFERENCES_KEY,
   Preferences,
-  Sentence,
-  STORAGE_KEY,
   makeId,
   normalizeForComparison,
   sanitizePreferences,
@@ -29,7 +27,7 @@ import {
 } from "@/app/lib/sentence-utils";
 
 export default function Home() {
-  const [sentences, setSentences] = useState<Sentence[]>(DEFAULT_SENTENCES);
+  const [sentences, setSentences] = useState<Sentence[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [inputValue, setInputValue] = useState("");
@@ -76,24 +74,27 @@ export default function Home() {
       return;
     }
 
-    try {
-      const storedSentences = window.localStorage.getItem(STORAGE_KEY);
-      let restoredSentences: Sentence[] | null = null;
-
-      if (storedSentences) {
-        const parsed = sanitizeSentencesPayload(JSON.parse(storedSentences));
-        if (parsed) {
-          restoredSentences = parsed;
-          setSentences(parsed);
-        }
+    const loadSentences = async () => {
+      try {
+        const loadedSentences = await sentencesService.getSentences();
+        setSentences(loadedSentences);
+      } catch (error) {
+        console.error("Unable to load sentences", error);
+        setSentences([]);
+      } finally {
+        setIsReady(true);
       }
+    };
 
+    loadSentences();
+
+    try {
       const storedIndex = window.localStorage.getItem(INDEX_STORAGE_KEY);
       if (storedIndex !== null) {
         const parsedIndex = Number.parseInt(storedIndex, 10);
 
         if (!Number.isNaN(parsedIndex)) {
-          const referenceList = restoredSentences ?? DEFAULT_SENTENCES;
+          const referenceList = sentences;
           if (referenceList.length === 0) {
             setCurrentIndex(0);
           } else {
@@ -106,9 +107,7 @@ export default function Home() {
         }
       }
     } catch (error) {
-      console.error("Unable to read stored sentences", error);
-    } finally {
-      setIsReady(true);
+      console.error("Unable to read stored index", error);
     }
   }, []);
 
@@ -185,14 +184,6 @@ export default function Home() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isMenuOpen]);
-
-  useEffect(() => {
-    if (!isReady || typeof window === "undefined") {
-      return;
-    }
-
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sentences));
-  }, [isReady, sentences]);
 
   useEffect(() => {
     if (!isReady || typeof window === "undefined") {

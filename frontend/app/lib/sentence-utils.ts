@@ -10,7 +10,6 @@ export type Preferences = {
   keypressSound: boolean;
 };
 
-export const STORAGE_KEY = "dictate-english-sentences";
 export const INDEX_STORAGE_KEY = "dictate-english-current-index";
 export const PREFERENCES_KEY = "dictate-english-preferences";
 

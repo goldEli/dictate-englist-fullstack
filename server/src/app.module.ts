@@ -3,8 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { SentencesModule } from './sentences/sentences.module';
 import { LoggerModule } from './logger/logger.module';
 import { User } from './user.entity';
+import { UserSentence } from './user-sentence.entity';
 
 @Module({
   imports: [
@@ -16,10 +18,11 @@ import { User } from './user.entity';
       username: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '123456',
       database: process.env.DB_NAME || 'dictate_english',
-      entities: [User],
+      entities: [User, UserSentence],
       synchronize: true,
     }),
     AuthModule,
+    SentencesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

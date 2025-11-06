@@ -10,21 +10,20 @@ import {
 } from "react";
 
 import {
-  DEFAULT_SENTENCES,
   EXPORT_FILENAME,
   INDEX_STORAGE_KEY,
   Sentence,
-  STORAGE_KEY,
   makeId,
   sanitizeSentencesPayload,
 } from "@/app/lib/sentence-utils";
+import { sentencesService } from "@/lib/sentences-service";
 
 type ImportStatus =
   | { type: "success"; message: string }
   | { type: "error"; message: string };
 
 export default function SentenceBankPage() {
-  const [sentences, setSentences] = useState<Sentence[]>(DEFAULT_SENTENCES);
+  const [sentences, setSentences] = useState<Sentence[]>([]);
   const [draft, setDraft] = useState("");
   const [isReady, setIsReady] = useState(false);
   const [speechAvailable, setSpeechAvailable] = useState(false);
@@ -36,28 +35,20 @@ export default function SentenceBankPage() {
       return;
     }
 
-    try {
-      const storedSentences = window.localStorage.getItem(STORAGE_KEY);
-      if (storedSentences) {
-        const parsed = sanitizeSentencesPayload(JSON.parse(storedSentences));
-        if (parsed) {
-          setSentences(parsed);
-        }
+    const loadSentences = async () => {
+      try {
+        const loadedSentences = await sentencesService.getSentences();
+        setSentences(loadedSentences);
+      } catch (error) {
+        console.error("Unable to load sentences", error);
+        setSentences([]);
+      } finally {
+        setIsReady(true);
       }
-    } catch (error) {
-      console.error("Unable to read stored sentences", error);
-    } finally {
-      setIsReady(true);
-    }
+    };
+
+    loadSentences();
   }, []);
-
-  useEffect(() => {
-    if (!isReady || typeof window === "undefined") {
-      return;
-    }
-
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sentences));
-  }, [isReady, sentences]);
 
   useEffect(() => {
     if (typeof window === "undefined") {

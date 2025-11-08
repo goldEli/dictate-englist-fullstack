@@ -300,15 +300,20 @@ export default function Home() {
     }
   };
 
-  const handleMasterSentence = useCallback(() => {
+  const handleMasterSentence = useCallback(async () => {
     if (!currentSentence) {
       return;
     }
 
-    setSentences((previous) =>
-      previous.filter((sentence) => sentence.id !== currentSentence.id),
-    );
-    setInputValue("");
+    try {
+      await sentencesService.deleteSentence(currentSentence.id);
+      setSentences((previous) =>
+        previous.filter((sentence) => sentence.id !== currentSentence.id),
+      );
+      setInputValue("");
+    } catch (error) {
+      console.error('Failed to delete sentence:', error);
+    }
   }, [currentSentence, setSentences]);
 
   const handleExport = useCallback(() => {

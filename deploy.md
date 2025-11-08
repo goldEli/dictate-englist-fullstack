@@ -39,6 +39,24 @@ The script will:
 - Wait for services to be healthy
 - Display access information
 
+## Update Deployment (After Code Changes)
+
+When you have made code changes and need to redeploy:
+
+```bash
+chmod +x deploy-update.sh
+./deploy-update.sh
+```
+
+The update script will:
+- Stop all running services
+- Rebuild Docker images with latest code
+- Restart all services
+- Wait for services to be healthy
+- Display deployment status
+
+**Important:** Use `deploy-update.sh` for code updates, not `deploy.sh`. The `deploy.sh` script is for initial deployment only.
+
 ## Manual Deployment
 
 If you prefer to deploy manually or the script fails:
@@ -180,6 +198,16 @@ You should see all services with "healthy" status:
 
 ## Management Commands
 
+### Quick Commands
+
+```bash
+# Update deployment (after code changes)
+./deploy-update.sh
+
+# View all services status
+docker-compose ps
+```
+
 ### View Logs
 ```bash
 # All services
@@ -257,7 +285,19 @@ docker-compose logs [service-name]
 
 ## Updating the Application
 
-When code changes are made:
+When code changes are made, you can either use the update script (recommended) or manual commands:
+
+### Recommended: Using Update Script
+
+```bash
+# Pull latest changes (if using git)
+git pull
+
+# Run update script (rebuilds and redeploys)
+./deploy-update.sh
+```
+
+### Manual Method
 
 ```bash
 # Pull latest changes

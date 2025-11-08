@@ -12,8 +12,8 @@
 set -e
 
 # Default values
-MYSQL_PASSWORD=""
-PORT=3000
+MYSQL_PASSWORD="mypassword123"
+PORT=8080
 MYSQL_DATA="./mysql-data"
 MYSQL_PORT=3306
 ENV_FILE=".env"

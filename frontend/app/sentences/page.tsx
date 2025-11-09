@@ -20,9 +20,10 @@ type OperationStatus =
 export default function SentenceBankPage() {
   const [sentences, setSentences] = useState<Sentence[]>([]);
   const [draft, setDraft] = useState("");
-  const [isReady, setIsReady] = useState(false);
   const [speechAvailable, setSpeechAvailable] = useState(false);
   const [operationStatus, setOperationStatus] = useState<OperationStatus | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -36,8 +37,6 @@ export default function SentenceBankPage() {
       } catch (error) {
         console.error("Unable to load sentences", error);
         setSentences([]);
-      } finally {
-        setIsReady(true);
       }
     };
 
@@ -49,7 +48,11 @@ export default function SentenceBankPage() {
       return;
     }
 
-    setSpeechAvailable("speechSynthesis" in window);
+    const checkSpeechAvailable = () => {
+      setSpeechAvailable("speechSynthesis" in window);
+    };
+
+    checkSpeechAvailable();
   }, []);
 
   useEffect(() => {
@@ -147,6 +150,24 @@ export default function SentenceBankPage() {
     }
   };
 
+  const handleStartEdit = (id: string, text: string) => {
+    setEditingId(id);
+    setEditText(text);
+  };
+
+  const handleSaveEdit = async () => {
+    if (editingId) {
+      await handleUpdateSentence(editingId, editText);
+      setEditingId(null);
+      setEditText("");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+
 
   return (
     <div className="min-h-screen bg-slate-950 py-12 text-slate-100">
@@ -231,30 +252,61 @@ export default function SentenceBankPage() {
                     <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                       Sentence {index + 1}
                     </span>
-                    <div className="flex items-center gap-2 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => speak(sentence.text)}
-                        className="font-medium text-slate-300 transition hover:text-slate-100"
-                      >
-                        Play
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteSentence(sentence.id)}
-                        className="font-medium text-rose-400 transition hover:text-rose-300"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    {editingId === sentence.id ? (
+                      <div className="flex items-center gap-2 text-xs">
+                        <button
+                          type="button"
+                          onClick={handleSaveEdit}
+                          className="font-medium text-emerald-400 transition hover:text-emerald-300"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          className="font-medium text-slate-300 transition hover:text-slate-100"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => speak(sentence.text)}
+                          className="font-medium text-slate-300 transition hover:text-slate-100"
+                        >
+                          Play
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStartEdit(sentence.id, sentence.text)}
+                          className="font-medium text-emerald-400 transition hover:text-emerald-300"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSentence(sentence.id)}
+                          className="font-medium text-rose-400 transition hover:text-rose-300"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <textarea
-                    value={sentence.text}
-                    onBlur={(event) =>
-                      handleUpdateSentence(sentence.id, event.target.value)
-                    }
-                    className="h-24 w-full resize-none rounded-xl border border-slate-800 bg-slate-950 p-3 text-sm text-slate-100 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-700"
-                  />
+                  {editingId === sentence.id ? (
+                    <textarea
+                      value={editText}
+                      onChange={(event) => setEditText(event.target.value)}
+                      className="h-24 w-full resize-none rounded-xl border border-emerald-500/40 bg-slate-950 p-3 text-sm text-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                      autoFocus
+                    />
+                  ) : (
+                    <div className="h-24 w-full rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-sm text-slate-200">
+                      {sentence.text}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

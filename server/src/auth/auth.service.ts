@@ -32,14 +32,20 @@ export class AuthService {
     const user = await this.userRepository.findOne({ where: { email } });
 
     if (!user) {
-      this.logger.warn(`Login failed - user not found: ${email}`, 'validateUser');
+      this.logger.warn(
+        `Login failed - user not found: ${email}`,
+        'validateUser',
+      );
       throw new UnauthorizedException('Invalid credentials');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {
-      this.logger.warn(`Login failed - invalid password: ${email}`, 'validateUser');
+      this.logger.warn(
+        `Login failed - invalid password: ${email}`,
+        'validateUser',
+      );
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -61,12 +67,19 @@ export class AuthService {
         expiresIn: '24h',
       });
 
-      await this.redis.setex(`session:${token}`, 86400, JSON.stringify({
-        userId: user.id,
-        email: user.email,
-      }));
+      await this.redis.setex(
+        `session:${token}`,
+        86400,
+        JSON.stringify({
+          userId: user.id,
+          email: user.email,
+        }),
+      );
 
-      this.logger.log(`User login successful: userId=${user.id}, email=${user.email}`, 'login');
+      this.logger.log(
+        `User login successful: userId=${user.id}, email=${user.email}`,
+        'login',
+      );
 
       return {
         success: true,
@@ -78,7 +91,11 @@ export class AuthService {
         token,
       };
     } catch (error) {
-      this.logger.error(`Login failed: ${loginDto.email}`, error.stack, 'login');
+      this.logger.error(
+        `Login failed: ${loginDto.email}`,
+        error.stack,
+        'login',
+      );
       throw error;
     }
   }
@@ -99,12 +116,18 @@ export class AuthService {
       const sessionData = await this.redis.get(`session:${token}`);
 
       if (!sessionData) {
-        this.logger.warn('Session validation failed - invalid or expired session', 'getCurrentUser');
+        this.logger.warn(
+          'Session validation failed - invalid or expired session',
+          'getCurrentUser',
+        );
         throw new UnauthorizedException('Invalid or expired session');
       }
 
       const session = JSON.parse(sessionData);
-      this.logger.log(`Session validation successful: userId=${session.userId}`, 'getCurrentUser');
+      this.logger.log(
+        `Session validation successful: userId=${session.userId}`,
+        'getCurrentUser',
+      );
 
       return {
         success: true,
@@ -114,7 +137,11 @@ export class AuthService {
         },
       };
     } catch (error) {
-      this.logger.error('Session validation failed', error.stack, 'getCurrentUser');
+      this.logger.error(
+        'Session validation failed',
+        error.stack,
+        'getCurrentUser',
+      );
       throw new UnauthorizedException('Invalid session');
     }
   }

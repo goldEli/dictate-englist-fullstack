@@ -19,7 +19,9 @@ const developmentFormat = winston.format.combine(
     format: 'YYYY-MM-DD HH:mm:ss',
   }),
   winston.format.printf(({ timestamp, level, message, context, ...meta }) => {
-    const metaString = Object.keys(meta).length ? JSON.stringify(meta, null, 2) : '';
+    const metaString = Object.keys(meta).length
+      ? JSON.stringify(meta, null, 2)
+      : '';
     return `[${timestamp}] [${level}] [${context}] ${message} ${metaString}`;
   }),
 );

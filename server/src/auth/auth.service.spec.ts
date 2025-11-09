@@ -61,7 +61,10 @@ describe('AuthService', () => {
       expect(repository.findOne).toHaveBeenCalledWith({
         where: { email: 'test@example.com' },
       });
-      expect(bcryptMock.compare).toHaveBeenCalledWith('password', 'hashedpassword');
+      expect(bcryptMock.compare).toHaveBeenCalledWith(
+        'password',
+        'hashedpassword',
+      );
       expect(result).toEqual(mockUser);
     });
 
@@ -108,7 +111,11 @@ describe('AuthService', () => {
   describe('getCurrentUser', () => {
     it('should get current user successfully', async () => {
       const mockRedis = {
-        get: jest.fn().mockResolvedValue(JSON.stringify({ userId: 1, email: 'test@example.com' })),
+        get: jest
+          .fn()
+          .mockResolvedValue(
+            JSON.stringify({ userId: 1, email: 'test@example.com' }),
+          ),
       };
       service['redis'] = mockRedis as any;
 

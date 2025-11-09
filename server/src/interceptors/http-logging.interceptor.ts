@@ -17,16 +17,14 @@ export class HttpLoggingInterceptor implements NestInterceptor {
     const response = context.switchToHttp().getResponse();
     const { method, url, ip } = request;
     const userAgent = request.get('user-agent') || '';
-    const correlationId = request.headers['x-correlation-id'] || this.generateCorrelationId();
+    const correlationId =
+      request.headers['x-correlation-id'] || this.generateCorrelationId();
 
     request.correlationId = correlationId;
 
     const startTime = Date.now();
 
-    this.logger.http(
-      `Request: ${method} ${url} - Started`,
-      'HTTP',
-    );
+    this.logger.http(`Request: ${method} ${url} - Started`, 'HTTP');
 
     return next.handle().pipe(
       tap(() => {

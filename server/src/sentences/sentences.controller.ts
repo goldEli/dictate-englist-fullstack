@@ -1,6 +1,20 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Headers, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Headers,
+  UseGuards,
+} from '@nestjs/common';
 import { SentencesService } from './sentences.service';
-import { CreateSentenceDto, UpdateSentenceDto, ReorderSentencesDto } from '../auth/dto/sentence.dto';
+import {
+  CreateSentenceDto,
+  UpdateSentenceDto,
+  ReorderSentencesDto,
+} from '../auth/dto/sentence.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 

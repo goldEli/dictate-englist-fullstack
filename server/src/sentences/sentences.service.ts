@@ -1,9 +1,17 @@
-import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as Redis from 'ioredis';
 import { UserSentence } from '../user-sentence.entity';
-import { CreateSentenceDto, UpdateSentenceDto, ReorderSentencesDto } from '../auth/dto/sentence.dto';
+import {
+  CreateSentenceDto,
+  UpdateSentenceDto,
+  ReorderSentencesDto,
+} from '../auth/dto/sentence.dto';
 import { AppLogger } from '../logger/logger.service';
 
 @Injectable()
@@ -34,7 +42,11 @@ export class SentencesService {
       const session = JSON.parse(sessionData);
       return session.userId;
     } catch (error) {
-      this.logger.error('Token validation failed', error.stack, 'getUserIdFromToken');
+      this.logger.error(
+        'Token validation failed',
+        error.stack,
+        'getUserIdFromToken',
+      );
       throw new UnauthorizedException('Invalid session');
     }
   }
@@ -42,19 +54,25 @@ export class SentencesService {
   async getSentences(token: string) {
     try {
       const userId = await this.getUserIdFromToken(token);
-      this.logger.debug(`Getting sentences for userId=${userId}`, 'getSentences');
+      this.logger.debug(
+        `Getting sentences for userId=${userId}`,
+        'getSentences',
+      );
 
       const sentences = await this.sentencesRepository.find({
         where: { user_id: userId },
         order: { sentence_order: 'ASC' },
       });
 
-      const formattedSentences = sentences.map(s => ({
+      const formattedSentences = sentences.map((s) => ({
         id: s.sentence_id,
         text: s.sentence_text,
       }));
 
-      this.logger.log(`Retrieved ${sentences.length} sentences for userId=${userId}`, 'getSentences');
+      this.logger.log(
+        `Retrieved ${sentences.length} sentences for userId=${userId}`,
+        'getSentences',
+      );
 
       return {
         success: true,
@@ -69,7 +87,10 @@ export class SentencesService {
   async createSentence(token: string, createSentenceDto: CreateSentenceDto) {
     try {
       const userId = await this.getUserIdFromToken(token);
-      this.logger.debug(`Creating sentence for userId=${userId}`, 'createSentence');
+      this.logger.debug(
+        `Creating sentence for userId=${userId}`,
+        'createSentence',
+      );
 
       const existingCount = await this.sentencesRepository.count({
         where: { user_id: userId },
@@ -84,7 +105,10 @@ export class SentencesService {
 
       await this.sentencesRepository.save(userSentence);
 
-      this.logger.log(`Created sentence for userId=${userId}`, 'createSentence');
+      this.logger.log(
+        `Created sentence for userId=${userId}`,
+        'createSentence',
+      );
 
       return {
         success: true,
@@ -94,15 +118,26 @@ export class SentencesService {
         },
       };
     } catch (error) {
-      this.logger.error('Failed to create sentence', error.stack, 'createSentence');
+      this.logger.error(
+        'Failed to create sentence',
+        error.stack,
+        'createSentence',
+      );
       throw error;
     }
   }
 
-  async updateSentence(token: string, sentenceId: string, updateSentenceDto: UpdateSentenceDto) {
+  async updateSentence(
+    token: string,
+    sentenceId: string,
+    updateSentenceDto: UpdateSentenceDto,
+  ) {
     try {
       const userId = await this.getUserIdFromToken(token);
-      this.logger.debug(`Updating sentence for userId=${userId}`, 'updateSentence');
+      this.logger.debug(
+        `Updating sentence for userId=${userId}`,
+        'updateSentence',
+      );
 
       const userSentence = await this.sentencesRepository.findOne({
         where: { user_id: userId, sentence_id: sentenceId },
@@ -115,7 +150,10 @@ export class SentencesService {
       userSentence.sentence_text = updateSentenceDto.text;
       await this.sentencesRepository.save(userSentence);
 
-      this.logger.log(`Updated sentence for userId=${userId}`, 'updateSentence');
+      this.logger.log(
+        `Updated sentence for userId=${userId}`,
+        'updateSentence',
+      );
 
       return {
         success: true,
@@ -125,7 +163,11 @@ export class SentencesService {
         },
       };
     } catch (error) {
-      this.logger.error('Failed to update sentence', error.stack, 'updateSentence');
+      this.logger.error(
+        'Failed to update sentence',
+        error.stack,
+        'updateSentence',
+      );
       throw error;
     }
   }
@@ -133,7 +175,10 @@ export class SentencesService {
   async deleteSentence(token: string, sentenceId: string) {
     try {
       const userId = await this.getUserIdFromToken(token);
-      this.logger.debug(`Deleting sentence for userId=${userId}`, 'deleteSentence');
+      this.logger.debug(
+        `Deleting sentence for userId=${userId}`,
+        'deleteSentence',
+      );
 
       const userSentence = await this.sentencesRepository.findOne({
         where: { user_id: userId, sentence_id: sentenceId },
@@ -145,21 +190,34 @@ export class SentencesService {
 
       await this.sentencesRepository.remove(userSentence);
 
-      this.logger.log(`Deleted sentence for userId=${userId}`, 'deleteSentence');
+      this.logger.log(
+        `Deleted sentence for userId=${userId}`,
+        'deleteSentence',
+      );
 
       return {
         success: true,
       };
     } catch (error) {
-      this.logger.error('Failed to delete sentence', error.stack, 'deleteSentence');
+      this.logger.error(
+        'Failed to delete sentence',
+        error.stack,
+        'deleteSentence',
+      );
       throw error;
     }
   }
 
-  async reorderSentences(token: string, reorderSentencesDto: ReorderSentencesDto) {
+  async reorderSentences(
+    token: string,
+    reorderSentencesDto: ReorderSentencesDto,
+  ) {
     try {
       const userId = await this.getUserIdFromToken(token);
-      this.logger.debug(`Reordering sentences for userId=${userId}`, 'reorderSentences');
+      this.logger.debug(
+        `Reordering sentences for userId=${userId}`,
+        'reorderSentences',
+      );
 
       const sentences = reorderSentencesDto.sentences;
 
@@ -171,13 +229,20 @@ export class SentencesService {
         );
       }
 
-      this.logger.log(`Reordered ${sentences.length} sentences for userId=${userId}`, 'reorderSentences');
+      this.logger.log(
+        `Reordered ${sentences.length} sentences for userId=${userId}`,
+        'reorderSentences',
+      );
 
       return {
         success: true,
       };
     } catch (error) {
-      this.logger.error('Failed to reorder sentences', error.stack, 'reorderSentences');
+      this.logger.error(
+        'Failed to reorder sentences',
+        error.stack,
+        'reorderSentences',
+      );
       throw error;
     }
   }

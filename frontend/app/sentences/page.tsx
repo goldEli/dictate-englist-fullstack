@@ -169,6 +169,34 @@ export default function SentenceBankPage() {
     setEditText("");
   };
 
+  const handleDeleteAllSentences = async () => {
+    const confirmed = confirm(
+      "Are you sure you want to delete all sentences? This action cannot be undone."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      for (const sentence of sentences) {
+        await sentencesService.deleteSentence(sentence.id);
+      }
+
+      setSentences([]);
+      setOperationStatus({
+        type: "success",
+        message: "All sentences deleted successfully.",
+      });
+    } catch (error) {
+      console.error("Failed to delete all sentences:", error);
+      setOperationStatus({
+        type: "error",
+        message: "Failed to delete all sentences. Please try again.",
+      });
+    }
+  };
+
   const handleBulkAddSentences = async () => {
     if (!bulkInput.trim()) {
       setOperationStatus({
@@ -332,9 +360,20 @@ export default function SentenceBankPage() {
             <h2 className="text-lg font-semibold text-slate-100">
               Library
             </h2>
-            <p className="text-sm text-slate-400">
-              {sentences.length} sentence{sentences.length === 1 ? "" : "s"}
-            </p>
+            <div className="flex items-center gap-4">
+              <p className="text-sm text-slate-400">
+                {sentences.length} sentence{sentences.length === 1 ? "" : "s"}
+              </p>
+              {sentences.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleDeleteAllSentences}
+                  className="rounded-full bg-rose-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-600"
+                >
+                  Delete All
+                </button>
+              )}
+            </div>
           </div>
           {sentences.length === 0 ? (
             <p className="mt-4 text-sm text-slate-400">

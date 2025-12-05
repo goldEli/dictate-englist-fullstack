@@ -20,6 +20,7 @@ type OperationStatus =
 export default function SentenceBankPage() {
   const [sentences, setSentences] = useState<Sentence[]>([]);
   const [draft, setDraft] = useState("");
+  const [bulkInput, setBulkInput] = useState("");
   const [speechAvailable, setSpeechAvailable] = useState(false);
   const [operationStatus, setOperationStatus] = useState<OperationStatus | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -168,6 +169,80 @@ export default function SentenceBankPage() {
     setEditText("");
   };
 
+  const handleBulkAddSentences = async () => {
+    if (!bulkInput.trim()) {
+      setOperationStatus({
+        type: "error",
+        message: "Please enter a JSON array of sentences.",
+      });
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(bulkInput);
+      
+      if (!Array.isArray(parsed)) {
+        setOperationStatus({
+          type: "error",
+          message: "Please enter a valid JSON array.",
+        });
+        return;
+      }
+
+      if (parsed.length === 0) {
+        setOperationStatus({
+          type: "error",
+          message: "Please enter at least one sentence.",
+        });
+        return;
+      }
+
+      // Validate all items are strings
+      const invalidItems = parsed.filter(item => typeof item !== "string");
+      if (invalidItems.length > 0) {
+        setOperationStatus({
+          type: "error",
+          message: "Please ensure all items in the array are strings.",
+        });
+        return;
+      }
+
+      // Create sentence objects with unique ids
+      const newSentences: Sentence[] = parsed.map(text => ({
+        id: makeId(),
+        text: text.trim(),
+      })).filter(sentence => sentence.text.length > 0);
+
+      if (newSentences.length === 0) {
+        setOperationStatus({
+          type: "error",
+          message: "Please enter non-empty sentences.",
+        });
+        return;
+      }
+
+      try {
+        await sentencesService.saveSentences(newSentences);
+        setSentences(previous => [...previous, ...newSentences]);
+        setBulkInput("");
+        setOperationStatus({
+          type: "success",
+          message: `${newSentences.length} sentence${newSentences.length === 1 ? "" : "s"} added successfully.`,
+        });
+      } catch (error) {
+        console.error("Unable to add bulk sentences", error);
+        setOperationStatus({
+          type: "error",
+          message: "Failed to add sentences. Please try again.",
+        });
+      }
+    } catch {
+      setOperationStatus({
+        type: "error",
+        message: "Invalid JSON format. Please check your input.",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 py-12 text-slate-100">
@@ -224,6 +299,30 @@ export default function SentenceBankPage() {
               className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-emerald-400"
             >
               Save sentence
+            </button>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
+          <h2 className="text-lg font-semibold text-slate-100">
+            Bulk Add Sentences
+          </h2>
+          <p className="mt-1 text-sm text-slate-400">
+            Add multiple sentences at once using a JSON array. Example: [First sentence, Second sentence]
+          </p>
+          <textarea
+            value={bulkInput}
+            onChange={(event) => setBulkInput(event.target.value)}
+            placeholder='Example: ["Hello world", "How are you?"]'
+            className="mt-4 min-h-[120px] w-full resize-none rounded-2xl border border-slate-700 bg-slate-950 p-3 text-sm text-slate-100 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-700"
+          />
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={handleBulkAddSentences}
+              className="rounded-full bg-blue-500 px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-blue-400"
+            >
+              Bulk Add
             </button>
           </div>
         </section>

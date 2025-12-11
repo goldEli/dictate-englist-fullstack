@@ -3,6 +3,7 @@
 export type Sentence = {
   id: string;
   text: string;
+  audioUrl?: string;
 };
 
 export type Preferences = {

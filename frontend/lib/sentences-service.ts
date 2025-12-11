@@ -3,6 +3,7 @@ import { apiClient } from '../lib/api-client';
 export interface Sentence {
   id: string;
   text: string;
+  audioUrl?: string;
 }
 
 export interface SentencesResponse {

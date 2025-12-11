@@ -226,18 +226,48 @@ export default function Home() {
   }, [sentences.length]);
 
   const speak = useCallback(
-    (text: string) => {
-      if (!speechAvailable || typeof window === "undefined" || !text) {
+    (text: string, audioUrl?: string) => {
+      if (typeof window === "undefined" || !text) {
         return;
       }
 
-      try {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.95;
-        window.speechSynthesis.speak(utterance);
-      } catch (error) {
-        console.error("Unable to speak sentence", error);
+      // 如果有 audioUrl，直接使用服务器生成的音频文件
+      if (audioUrl) {
+        try {
+          // 停止任何正在播放的音频
+          window.speechSynthesis.cancel();
+          
+          // 创建并播放音频
+          const audio = new Audio(audioUrl);
+          audio.play().catch(error => {
+            console.error("Unable to play audio file", error);
+            // 如果播放失败，回退到 SpeechSynthesis API
+            fallbackToSpeechSynthesis(text);
+          });
+        } catch (error) {
+          console.error("Error using audio file", error);
+          // 如果出错，回退到 SpeechSynthesis API
+          fallbackToSpeechSynthesis(text);
+        }
+      } else {
+        // 没有 audioUrl，使用 SpeechSynthesis API
+        fallbackToSpeechSynthesis(text);
+      }
+
+      // 回退到 SpeechSynthesis API 的函数
+      function fallbackToSpeechSynthesis(text: string) {
+        if (!speechAvailable) {
+          return;
+        }
+
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 0.95;
+          window.speechSynthesis.speak(utterance);
+        } catch (error) {
+          console.error("Unable to speak sentence", error);
+        }
       }
     },
     [speechAvailable],
@@ -252,8 +282,8 @@ export default function Home() {
       return;
     }
 
-    speak(currentSentence.text);
-  }, [currentSentence?.text, speak]);
+    speak(currentSentence.text, currentSentence.audioUrl);
+  }, [currentSentence?.text, currentSentence?.audioUrl, speak]);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -677,7 +707,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() =>
-                        currentSentence && speak(currentSentence.text)
+                        currentSentence && speak(currentSentence.text, currentSentence.audioUrl)
                       }
                       className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-medium text-slate-900 transition hover:bg-emerald-400"
                     >

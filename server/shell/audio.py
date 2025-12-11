@@ -33,7 +33,8 @@ def tts_with_download(text, voice_display="Jennifer / 詹妮弗", language_displ
     
     if download_path is None:
         # 如果没有指定下载路径，使用默认路径和基于text生成的文件名
-        default_dir = "/Users/eli/Documents/github/dictate-englist-fullstack/server/public"
+        # 使用相对路径，以便在Docker容器中正常工作
+        default_dir = os.path.join(os.path.dirname(__file__), "..", "public")
         filename = generate_valid_filename(text)
         download_path = os.path.join(default_dir, filename)
     

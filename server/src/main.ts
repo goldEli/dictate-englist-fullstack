@@ -3,9 +3,19 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { HttpLoggingInterceptor } from './interceptors/http-logging.interceptor';
 import { AppLogger } from './logger/logger.service';
+import * as express from 'express';
+import * as path from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // 配置静态文件服务
+  app.use(
+    '/public',
+    express.static(path.join(__dirname, '..', 'public'), {
+      maxAge: 31557600000, // 1 year
+    }),
+  );
 
   app.useGlobalInterceptors(new HttpLoggingInterceptor(app.get(AppLogger)));
 

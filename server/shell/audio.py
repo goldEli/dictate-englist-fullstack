@@ -2,6 +2,7 @@ from gradio_client import Client
 import shutil
 import os
 import re
+import sys
 
 def generate_valid_filename(text):
     """
@@ -43,20 +44,20 @@ def tts_with_download(text, voice_display="Jennifer / 詹妮弗", language_displ
     print(f"Audio file saved to: {download_path}")
     return download_path
 
-# 示例用法
+# 命令行调用支持
 if __name__ == "__main__":
-    # 测试1：使用较长的文本
-    text1 = "Refactor the MobileModal component with the following requirements:"
-    tts_with_download(text1)
-    
-    # 测试2：使用包含特殊字符的文本
-    text2 = "Hello, world! How are you?"
-    tts_with_download(text2)
-    
-    # 测试3：使用较短的文本
-    text3 = "Simple test"
-    tts_with_download(text3)
-    
-    # 也可以指定自定义路径
-    # custom_path = "/Users/eli/Documents/custom_output.wav"
-    # tts_with_download(text, download_path=custom_path)
+    # 从命令行获取参数
+    if len(sys.argv) == 3:
+        text = sys.argv[1]
+        output_path = sys.argv[2]
+        tts_with_download(text, download_path=output_path)
+    elif len(sys.argv) == 2:
+        text = sys.argv[1]
+        tts_with_download(text)
+    elif len(sys.argv) == 1:
+        # 默认测试
+        text = "Hello, this is a default test message."
+        tts_with_download(text)
+    else:
+        print("Usage: python audio.py <text> [output_path]")
+        sys.exit(1)

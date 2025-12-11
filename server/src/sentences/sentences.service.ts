@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as Redis from 'ioredis';
@@ -13,6 +9,7 @@ import {
   ReorderSentencesDto,
 } from '../auth/dto/sentence.dto';
 import { AppLogger } from '../logger/logger.service';
+import { AudioService } from './audio.service';
 
 @Injectable()
 export class SentencesService {
@@ -22,6 +19,7 @@ export class SentencesService {
     @InjectRepository(UserSentence)
     private sentencesRepository: Repository<UserSentence>,
     private readonly logger: AppLogger,
+    private readonly audioService: AudioService,
   ) {
     this.redis = new Redis.default({
       host: process.env.REDIS_HOST || 'localhost',
@@ -67,6 +65,7 @@ export class SentencesService {
       const formattedSentences = sentences.map((s) => ({
         id: s.sentence_id,
         text: s.sentence_text,
+        audioUrl: s.audio_url,
       }));
 
       this.logger.log(
@@ -96,17 +95,21 @@ export class SentencesService {
         where: { user_id: userId },
       });
 
+      // 生成音频文件
+      const audioUrl = await this.audioService.generateAudio(createSentenceDto.text);
+
       const userSentence = this.sentencesRepository.create({
         user_id: userId,
         sentence_id: createSentenceDto.id,
         sentence_text: createSentenceDto.text,
         sentence_order: existingCount,
+        audio_url: audioUrl,
       });
 
       await this.sentencesRepository.save(userSentence);
 
       this.logger.log(
-        `Created sentence for userId=${userId}`,
+        `Created sentence for userId=${userId} with audio`,
         'createSentence',
       );
 
@@ -115,6 +118,7 @@ export class SentencesService {
         sentence: {
           id: userSentence.sentence_id,
           text: userSentence.sentence_text,
+          audioUrl: userSentence.audio_url,
         },
       };
     } catch (error) {

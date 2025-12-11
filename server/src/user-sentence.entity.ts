@@ -26,6 +26,9 @@ export class UserSentence {
   @Column({ type: 'int' })
   sentence_order: number;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  audio_url: string;
+
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;

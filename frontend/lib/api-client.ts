@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.31.44:8081';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.31.44:8081';
 
 class ApiClient {
   private instance: AxiosInstance;

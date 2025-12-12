@@ -13,6 +13,7 @@ import {
 import { ConfettiBurst } from "@/app/components/confetti";
 import { useAudioCues } from "@/app/hooks/use-audio-cues";
 import { sentencesService, Sentence } from "@/lib/sentences-service";
+import { API_BASE_URL } from "@/lib/api-client";
 import {
   DEFAULT_PREFERENCES,
   EXPORT_FILENAME,
@@ -237,8 +238,9 @@ export default function Home() {
           // 停止任何正在播放的音频
           window.speechSynthesis.cancel();
           
-          // 创建并播放音频
-          const audio = new Audio(audioUrl);
+          // 创建并播放音频 - 确保音频URL指向后端服务
+          const fullAudioUrl = audioUrl.startsWith('http') ? audioUrl : `${API_BASE_URL}${audioUrl}`;
+          const audio = new Audio(fullAudioUrl);
           audio.play().catch(error => {
             console.error("Unable to play audio file", error);
             // 如果播放失败，回退到 SpeechSynthesis API

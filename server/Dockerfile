@@ -1,29 +1,32 @@
 # Build stage
 FROM node:20-alpine AS builder
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install Python and dependencies for audio generation
+RUN apk add --no-cache python3 py3-pip py3-uv
 
 # Set working directory
 WORKDIR /usr/src/app
 
 # Copy package files
-COPY package.json pnpm-lock.yaml ./
+COPY package.json ./
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies using npm
+RUN npm install
 
 # Copy source code
 COPY . .
 
 # Build application
-RUN pnpm build
+RUN npm run build
 
 # Production stage
 FROM node:20-alpine AS runner
 
-# Install pnpm and curl for healthcheck
-RUN npm install -g pnpm && apk add --no-cache curl
+# Install curl for healthcheck and Python for audio generation
+RUN apk add --no-cache curl python3 py3-pip py3-uv
+
+# Install Python dependencies for audio generation
+RUN pip3 install --no-cache-dir --break-system-packages gradio_client
 
 # Create app directory
 WORKDIR /usr/src/app
@@ -33,13 +36,16 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
 
 # Copy package files
-COPY package.json pnpm-lock.yaml ./
+COPY package.json ./
 
-# Install only production dependencies
-RUN pnpm install --prod --frozen-lockfile
+# Install only production dependencies using npm
+RUN npm install --production
 
 # Copy built application from builder stage
 COPY --from=builder /usr/src/app/dist ./dist
+
+# Copy audio generation scripts
+COPY shell/audio.py ./shell/audio.py
 
 # Set proper permissions
 RUN chown -R nestjs:nodejs /usr/src/app

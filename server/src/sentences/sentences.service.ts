@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/co
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as Redis from 'ioredis';
+import { v4 as uuidv4 } from 'uuid';
 import { UserSentence } from '../user-sentence.entity';
 import {
   CreateSentenceDto,
@@ -100,7 +101,7 @@ export class SentencesService {
 
       const userSentence = this.sentencesRepository.create({
         user_id: userId,
-        sentence_id: createSentenceDto.id,
+        sentence_id: uuidv4(),
         sentence_text: createSentenceDto.text,
         sentence_order: existingCount,
         audio_url: audioUrl,
